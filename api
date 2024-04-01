@@ -1,0 +1,54 @@
+import json
+import requests
+
+url = "https://translate-language.p.rapidapi.com/translate"
+to_language = "<eng>"
+from_language = "rus"
+
+headers = {
+    "content-type": "application/json",
+    "x-rapidapi-key": "356d4d333fmsh09c053c47112041p188b46jsne035e07e1e25",
+    "x-rapidapi-host": "translate-language.p.rapidapi.com"
+}
+
+try:
+    with open("n2.json", "r", encoding="utf-8") as file:
+        while True:
+            try:
+                # читаем строку из файла
+                line = next(file)
+                # десериализуем строку
+                data = json.loads(line)
+                # обрабатываем строку
+                translated_data = []
+                for item in data[:300]:
+                    try:
+                        querystring = {
+                            "to_language": to_language,
+                            "from_language": from_language,
+                            "text": data ["description"]
+                        }
+                        response = requests.post(url, headers=headers, json=querystring)
+                        translated_text = response.json()["текст"]
+                        translated_item = {"текст": translated_text}
+                        translated_data.append(translated_item)
+                    except KeyError as e:
+                        print("ошибка чтения поля 'текст':", item)
+                
+                # сохраняем переведенные данные в новый json-файл
+                with open("translated_data.json", "w", encoding="utf-8") as file_out:
+                    json.dump(translated_data, file_out, ensure_ascii=False, indent=4)
+
+            except json.JSONDecodeError as e:
+                print("ошибка десериализации строки:", line)
+                continue
+
+            except StopIteration:
+                # достигли конца файла
+                break
+
+except FileNotFoundError:
+    print("Файл не найден.")
+
+except Exception as e:
+    print("ошибка:", str(e))
